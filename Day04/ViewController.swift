@@ -12,8 +12,9 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     @IBOutlet weak var collectionView: UICollectionView!
     var dataSource: UICollectionViewDataSource?
     
-    var editingMode = false
     var selectedCell: UICollectionViewCell?
+    var cellSnapshot: UIView?
+    var selectedIndexPath: IndexPath?
     
     override func viewDidLoad() {
         collectionView.delegate = self
@@ -26,34 +27,56 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     }
     
     func handleLongGesture(gesture: UILongPressGestureRecognizer) {
+        let location = gesture.location(in: collectionView)
         let indexPath = collectionView.indexPathForItem(at: gesture.location(in: collectionView))
         
         switch(gesture.state) {
             
         case .began:
-            guard let selectedIndexPath = indexPath else { return }
+            self.selectedIndexPath = indexPath
+            guard selectedIndexPath != nil  else { return }
             
-            editingMode = true
-            selectedCell = collectionView.cellForItem(at: selectedIndexPath)
-            let layer = selectedCell?.layer
+            selectedCell = collectionView.cellForItem(at: selectedIndexPath!)
+            
+            cellSnapshot = selectedCell?.snapshotView(afterScreenUpdates: true)
+            cellSnapshot?.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+            cellSnapshot?.alpha = 0.95
+            cellSnapshot?.center = selectedCell!.center
+            
+            let layer = cellSnapshot?.layer
             layer?.masksToBounds = false
             layer?.shadowRadius = 1
             layer?.shadowOpacity = 0.3
             layer?.shadowOffset = CGSize(width: -4.0, height: -4)
-            
-            collectionView.beginInteractiveMovementForItem(at: selectedIndexPath)
         
+            collectionView.addSubview(cellSnapshot!)
+            UIView.animate(withDuration: 0.25) { [unowned self] in self.cellSnapshot?.center = location }
+            
+            selectedCell?.contentView.alpha = 0
+            
         case .changed:
-            collectionView.updateInteractiveMovementTargetPosition(gesture.location(in: collectionView))
+            cellSnapshot?.center = gesture.location(in: collectionView)
+            
+            if indexPath != nil, selectedIndexPath != nil, selectedIndexPath != indexPath {
+                collectionView.moveItem(at: selectedIndexPath!, to: indexPath!)
+                self.selectedIndexPath = indexPath
+            }
             
         case .ended:
-            collectionView.endInteractiveMovement()
-            editingMode = false
-            let layer = selectedCell?.layer
-            UIView.animate(withDuration: 3, animations: {layer?.shadowOpacity = 0}) { [unowned self] _ in
-            self.selectedCell = nil
+            UIView.animate(withDuration: 0.25, animations: { [unowned self] in
+                self.cellSnapshot?.center = (self.selectedCell?.center)!
+                self.cellSnapshot?.alpha = 1
+                self.cellSnapshot?.transform = CGAffineTransform.identity
+            }) { [unowned self] _ in
+                self.cellSnapshot?.removeFromSuperview()
+                self.cellSnapshot = nil
+                
+                self.selectedCell?.contentView.alpha = 1
+                self.selectedCell = nil
+                
+                self.selectedIndexPath = nil
             }
-        
+            
         default:
             collectionView.cancelInteractiveMovement()
         }
@@ -61,14 +84,6 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: 57, height: 57)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        cell.contentView.cornerRadius = cell.bounds.width / 57 * 10
-        cell.cornerRadius = cell.contentView.cornerRadius
-        
-        cell.contentView.borderColor = UIColor(red: 0, green: 122/255, blue: 1, alpha: 1)
-        cell.contentView.borderWidth = 1
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {

@@ -28,6 +28,12 @@ class DataSource: NSObject, UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
         (cell.viewWithTag(1) as? UILabel)?.text = indexes[indexPath.row].description
         
+        cell.contentView.cornerRadius = cell.bounds.width / 57 * 10
+        cell.cornerRadius = cell.contentView.cornerRadius
+        
+        cell.contentView.borderColor = UIColor(red: 0, green: 122/255, blue: 1, alpha: 1)
+        cell.contentView.borderWidth = 1
+        
         return cell
     }
     
