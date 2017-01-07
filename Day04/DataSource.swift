@@ -38,8 +38,22 @@ class DataSource: NSObject, UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        let temp = indexes[sourceIndexPath.row]
-        indexes[sourceIndexPath.row] = indexes[destinationIndexPath.row]
-        indexes[destinationIndexPath.row] = temp
+        let source = sourceIndexPath.row
+        let dest = destinationIndexPath.row
+        let temp = indexes[source]
+        
+        if source == dest { return }
+        
+        if source < dest {
+            for i in source ... dest - 1 {
+                indexes[i] = indexes[i + 1]
+            }
+            indexes[dest] = temp
+        } else {
+            for i in (dest + 1 ... source).reversed() {
+                indexes[i] = indexes[i - 1]
+            }
+            indexes[dest] = temp
+        }
     }
 }

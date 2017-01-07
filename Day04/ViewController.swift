@@ -50,7 +50,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
             layer?.shadowOffset = CGSize(width: -4.0, height: -4)
             
             collectionView.addSubview(cellSnapshot!)
-            //            UIView.animate(withDuration: 0.25) { [unowned self] in self.cellSnapshot?.center = location }
+          
             selectedLocationInSnapshot = gesture.location(in: cellSnapshot)
             selectedCell?.contentView.alpha = 0
             
@@ -60,6 +60,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
             
             if let target = collectionView.indexPathForItem(at: cellSnapshot!.center) {
                 collectionView.moveItem(at: selectedIndexPath!, to: target)
+                collectionView.dataSource?.collectionView!(collectionView, moveItemAt: selectedIndexPath!, to: target)
                 self.selectedIndexPath = target
             }
             
