@@ -14,6 +14,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     
     var selectedCell: UICollectionViewCell?
     var cellSnapshot: UIView?
+    var selectedLocationInSnapshot: CGPoint?
     var selectedIndexPath: IndexPath?
     
     override func viewDidLoad() {
@@ -27,7 +28,6 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     }
     
     func handleLongGesture(gesture: UILongPressGestureRecognizer) {
-        let location = gesture.location(in: collectionView)
         let indexPath = collectionView.indexPathForItem(at: gesture.location(in: collectionView))
         
         switch(gesture.state) {
@@ -48,18 +48,19 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
             layer?.shadowRadius = 1
             layer?.shadowOpacity = 0.3
             layer?.shadowOffset = CGSize(width: -4.0, height: -4)
-        
-            collectionView.addSubview(cellSnapshot!)
-            UIView.animate(withDuration: 0.25) { [unowned self] in self.cellSnapshot?.center = location }
             
+            collectionView.addSubview(cellSnapshot!)
+            //            UIView.animate(withDuration: 0.25) { [unowned self] in self.cellSnapshot?.center = location }
+            selectedLocationInSnapshot = gesture.location(in: cellSnapshot)
             selectedCell?.contentView.alpha = 0
             
         case .changed:
-            cellSnapshot?.center = gesture.location(in: collectionView)
+            guard cellSnapshot != nil else { return }
+            cellSnapshot?.frame = cellSnapshot!.frame.move(point: selectedLocationInSnapshot!, to: gesture.location(in: cellSnapshot!))
             
-            if indexPath != nil, selectedIndexPath != nil, selectedIndexPath != indexPath {
-                collectionView.moveItem(at: selectedIndexPath!, to: indexPath!)
-                self.selectedIndexPath = indexPath
+            if let target = collectionView.indexPathForItem(at: cellSnapshot!.center) {
+                collectionView.moveItem(at: selectedIndexPath!, to: target)
+                self.selectedIndexPath = target
             }
             
         case .ended:
